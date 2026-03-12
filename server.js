@@ -70,6 +70,7 @@ wss.on('connection', (ws) => {
           questions: msg.questions,
           currentQ: 0,
           timePerQ: msg.timePerQ || 20,
+          mode: msg.mode || 'blitz',
           answers: {},
         },
         timerTimeout: null,
@@ -82,7 +83,7 @@ wss.on('connection', (ws) => {
       // Add host as a player too
       room.players['host'] = { ws, name: msg.name, score: 0, answered: false };
 
-      send(ws, { type: 'room_created', code, id: 'host' });
+      send(ws, { type: 'room_created', code, id: 'host', mode: room.state.mode });
       send(ws, { type: 'state', summary: getRoomSummary(room) });
       console.log(`Room ${code} created by ${msg.name}`);
     }
@@ -127,6 +128,7 @@ wss.on('connection', (ws) => {
         index: 0,
         total: myRoom.state.questions.length,
         timePerQ: myRoom.state.timePerQ,
+        mode: myRoom.state.mode,
         cat: q.cat,
         text: q.q,
         choices: q.ch,
@@ -194,6 +196,7 @@ wss.on('connection', (ws) => {
           index: next,
           total: myRoom.state.questions.length,
           timePerQ: myRoom.state.timePerQ,
+          mode: myRoom.state.mode,
           cat: q.cat,
           text: q.q,
           choices: q.ch,
