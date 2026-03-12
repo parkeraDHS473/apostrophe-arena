@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apostrophe Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Epilogue:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #0c0b18;
+  --surface: #13112a;
+  --card:    #1a1730;
+  --border:  #2a2550;
+  --accent:  #7c3aed;
+  --gold:    #fbbf24;
+  --green:   #10b981;
+  --red:     #ef4444;
+  --text:    #f0eeff;
+  --muted:   #6b6490;
+  --glow:    rgba(124,58,237,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Epilogue', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% 10%, rgba(124,58,237,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 85%, rgba(251,191,36,0.07) 0%, transparent 50%);
+  pointer-events:none; z-index:0;
+}
+
+/* ─── SCREENS ─── */
+.screen { display:none; position:relative; z-index:1; min-height:100vh; padding:1.25rem; }
+.screen.active { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.screen.top { justify-content:flex-start; padding-top:1rem; }
+
+/* ─── TYPE ─── */
+.hero {
+  font-family:'Syne', sans-serif; font-weight:800;
+  font-size: clamp(3.8rem, 13vw, 8rem);
+  line-height:0.88; letter-spacing:-0.02em;
+  background:linear-gradient(140deg, #fff 0%, var(--gold) 45%, var(--accent) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.hero-sub {
+  font-family:'Space Mono', monospace; font-size:0.68rem;
+  letter-spacing:0.22em; text-transform:uppercase; color:var(--muted);
+  margin-top:0.75rem;
+}
+.section-head {
+  font-family:'Syne', sans-serif; font-weight:700; font-size:1.5rem;
+  letter-spacing:-0.01em; margin-bottom:1.25rem;
+}
+.mono { font-family:'Space Mono', monospace; }
+.muted { color:var(--muted); font-size:0.8rem; }
+.accent-text { color:var(--gold); }
+
+/* ─── BADGE ─── */
+.badge {
+  display:inline-flex; align-items:center; gap:0.35rem;
+  background:rgba(124,58,237,0.15); border:1px solid rgba(124,58,237,0.45);
+  color:#c4b5fd; font-family:'Space Mono', monospace;
+  font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase;
+  padding:0.28rem 0.7rem; margin-bottom:0.9rem;
+}
+
+/* ─── CARDS ─── */
+.card {
+  background:var(--card); border:1px solid var(--border);
+  padding:1.6rem; width:100%; max-width:460px; position:relative;
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(124,58,237,0.7), transparent);
+}
+
+/* ─── MODE BUTTONS ─── */
+.mode-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:0.75rem; width:100%; max-width:460px; margin-top:1.5rem;
+}
+.mode-btn {
+  background:var(--card); border:1px solid var(--border);
+  padding:1.4rem 1.1rem; cursor:pointer; text-align:left;
+  transition:all 0.18s; position:relative; overflow:hidden;
+}
+.mode-btn:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px var(--glow); }
+.mode-icon { font-size:1.6rem; margin-bottom:0.4rem; }
+.mode-name { font-family:'Syne', sans-serif; font-weight:700; font-size:1rem; color:var(--gold); }
+.mode-desc { font-size:0.71rem; color:var(--muted); margin-top:0.2rem; line-height:1.4; }
+
+/* ─── INPUTS ─── */
+.field { display:flex; flex-direction:column; gap:0.35rem; margin-bottom:1rem; }
+.field label { font-family:'Space Mono', monospace; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
+.field input {
+  background:var(--surface); border:1px solid var(--border);
+  color:var(--text); font-family:'Epilogue', sans-serif; font-size:1rem;
+  padding:0.7rem 1rem; outline:none; transition:border-color 0.2s; width:100%;
+  border-radius:0;
+}
+.field input:focus { border-color:var(--accent); }
+.field input.code-input {
+  font-family:'Space Mono', monospace; font-size:2rem;
+  text-align:center; letter-spacing:0.4em; text-transform:uppercase;
+}
+.field input.error { border-color:var(--red) !important; animation:shake 0.3s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-5px)} 70%{transform:translateX(5px)} }
+
+/* ─── PILL SELECTORS ─── */
+.pills { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.pill {
+  font-family:'Space Mono', monospace; font-size:0.72rem; letter-spacing:0.05em;
+  padding:0.38rem 0.9rem; background:var(--surface); border:1px solid var(--border);
+  color:var(--muted); cursor:pointer; transition:all 0.15s;
+}
+.pill:hover { border-color:var(--accent); color:var(--text); }
+.pill.on { background:rgba(124,58,237,0.2); border-color:var(--accent); color:#c4b5fd; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  font-family:'Syne', sans-serif; font-weight:700; font-size:0.9rem;
+  letter-spacing:0.04em; padding:0.7rem 1.5rem;
+  cursor:pointer; border:none; transition:all 0.15s;
+  display:inline-flex; align-items:center; gap:0.45rem;
+}
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:#6d28d9; transform:translateY(-1px); box-shadow:0 4px 20px var(--glow); }
+.btn-primary:disabled { opacity:0.35; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); }
+.btn-ghost:hover { border-color:var(--text); color:var(--text); }
+.btn-gold { background:var(--gold); color:#000; }
+.btn-gold:hover { background:#f59e0b; transform:translateY(-1px); }
+.btn-row { display:flex; gap:0.7rem; margin-top:1.5rem; flex-wrap:wrap; }
+
+/* ─── LOBBY ─── */
+.room-code-display {
+  text-align:center; padding:1.25rem 0 1rem;
+}
+.rcd-label {
+  font-family:'Space Mono', monospace; font-size:0.62rem;
+  text-transform:uppercase; letter-spacing:0.2em; color:var(--muted); margin-bottom:0.3rem;
+}
+.rcd-code {
+  font-family:'Syne', sans-serif; font-weight:800; font-size:4rem;
+  letter-spacing:0.25em;
+  background:linear-gradient(135deg, var(--gold), var(--accent));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.player-chips { display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:1.1rem; min-height:2.5rem; align-items:flex-start; }
+.chip {
+  display:inline-flex; align-items:center; gap:0.45rem;
+  background:var(--surface); border:1px solid var(--border);
+  padding:0.32rem 0.75rem; font-size:0.82rem;
+  animation:popIn 0.28s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+.dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.dot.host { background:var(--gold); }
+
+/* ─── WAITING ─── */
+.waiting-dots span {
+  display:inline-block; width:7px; height:7px; background:var(--accent);
+  border-radius:50%; margin:0 3px;
+  animation:bdot 1.2s infinite ease-in-out;
+}
+.waiting-dots span:nth-child(2){animation-delay:0.2s}
+.waiting-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes bdot { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-9px)} }
+
+/* ─── GAME HUD ─── */
+.hud {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.55rem 0; border-bottom:1px solid var(--border); margin-bottom:0.9rem;
+}
+.hud-label {
+  font-family:'Space Mono', monospace; font-size:0.68rem;
+  text-transform:uppercase; letter-spacing:0.1em; color:var(--muted);
+}
+.hud-label strong { color:var(--text); }
+.timer-wrap { display:flex; align-items:center; gap:0.5rem; }
+.timer-track { width:90px; height:5px; background:var(--border); }
+.timer-bar { height:100%; background:var(--accent); transition:width 1s linear, background 0.3s; }
+.timer-num {
+  font-family:'Space Mono', monospace; font-size:0.85rem;
+  color:var(--accent); width:2ch; text-align:right;
+}
+
+/* ─── QUESTION CARD ─── */
+.q-card {
+  background:var(--card); border:1px solid var(--border);
+  padding:1.4rem; margin-bottom:0.7rem; position:relative; overflow:hidden;
+}
+.q-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+  background-size:200% 100%; animation:shimmer 2s linear infinite;
+}
+@keyframes shimmer { from{background-position:200% 0} to{background-position:-200% 0} }
+.q-cat {
+  font-family:'Space Mono', monospace; font-size:0.6rem;
+  text-transform:uppercase; letter-spacing:0.15em; color:var(--accent);
+  margin-bottom:0.65rem; display:flex; align-items:center; gap:0.4rem;
+}
+.q-cat::before { content:''; width:5px; height:5px; background:var(--accent); display:inline-block; }
+.q-text {
+  font-size:clamp(1rem, 2.8vw, 1.25rem); line-height:1.6; font-weight:500;
+}
+.blank {
+  display:inline-block; border-bottom:2px solid var(--gold);
+  color:var(--gold); min-width:55px; text-align:center;
+  padding:0 0.25rem; font-weight:700; transition:all 0.3s;
+}
+
+/* ─── CHOICES ─── */
+.choices { display:grid; grid-template-columns:1fr 1fr; gap:0.55rem; margin-top:1.1rem; }
+.choice {
+  background:var(--surface); border:1px solid var(--border);
+  padding:0.85rem 1rem; cursor:pointer;
+  display:flex; align-items:center; gap:0.65rem;
+  transition:all 0.15s; font-size:0.9rem; font-weight:500; text-align:left;
+}
+.choice:hover:not([disabled]) { border-color:var(--accent); background:rgba(124,58,237,0.09); }
+.choice[disabled] { cursor:not-allowed; }
+.choice .ck {
+  font-family:'Space Mono', monospace; font-size:0.62rem;
+  background:var(--border); color:var(--muted);
+  padding:0.13rem 0.35rem; flex-shrink:0;
+}
+.choice.picked  { border-color:var(--accent) !important; background:rgba(124,58,237,0.14) !important; }
+.choice.correct { border-color:var(--green)  !important; background:rgba(16,185,129,0.1)   !important; color:var(--green); }
+.choice.wrong   { border-color:var(--red)    !important; background:rgba(239,68,68,0.1)     !important; color:var(--red); }
+
+/* ─── EXPLANATION ─── */
+.exp {
+  background:var(--surface); border-left:3px solid var(--green);
+  padding:0.85rem 1rem; margin-bottom:0.7rem; display:none;
+  animation:slideIn 0.25s ease;
+}
+.exp.show { display:block; }
+.exp.bad  { border-left-color:var(--red); }
+@keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+.exp-rule {
+  font-family:'Space Mono', monospace; font-size:0.62rem;
+  text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); margin-bottom:0.35rem;
+}
+.exp-body { font-size:0.85rem; line-height:1.6; }
+
+/* ─── LOCKED MSG ─── */
+.locked {
+  background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.35);
+  padding:0.65rem 1rem; text-align:center;
+  font-family:'Space Mono', monospace; font-size:0.78rem; color:var(--green);
+  margin-bottom:0.7rem; display:none;
+}
+.locked.show { display:block; }
+
+/* ─── HOST CONTROLS ─── */
+.host-ctrl { display:none; align-items:center; gap:1rem; margin-bottom:0.7rem; }
+.host-ctrl.show { display:flex; }
+.tally { font-family:'Space Mono', monospace; font-size:0.73rem; color:var(--muted); }
+
+/* ─── SCOREBOARD ─── */
+.sb { background:var(--card); border:1px solid var(--border); padding:0.85rem 1rem; }
+.sb-head {
+  font-family:'Space Mono', monospace; font-size:0.6rem;
+  text-transform:uppercase; letter-spacing:0.15em; color:var(--muted); margin-bottom:0.55rem;
+}
+.sb-row {
+  display:flex; align-items:center; gap:0.6rem;
+  padding:0.32rem 0; border-bottom:1px solid var(--border);
+  font-size:0.82rem; transition:all 0.3s;
+}
+.sb-row:last-child { border-bottom:none; }
+.sb-row.me { color:var(--gold); font-weight:700; }
+.sb-rank { font-family:'Space Mono', monospace; font-size:0.67rem; color:var(--muted); width:1.4rem; flex-shrink:0; }
+.sb-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb-pts  { font-family:'Space Mono', monospace; font-size:0.78rem; color:var(--accent); }
+.sb-tick { font-size:0.7rem; width:1rem; text-align:center; }
+
+/* ─── RESULTS ─── */
+.results-title {
+  font-family:'Syne', sans-serif; font-weight:800;
+  font-size:clamp(2rem, 9vw, 4.5rem); text-align:center;
+  background:linear-gradient(135deg, var(--gold), var(--accent));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:1.25rem;
+}
+.podium { display:flex; align-items:flex-end; justify-content:center; gap:0.5rem; margin-bottom:1.25rem; }
+.pd-slot { display:flex; flex-direction:column; align-items:center; gap:0.35rem; }
+.pd-name { font-family:'Space Mono', monospace; font-size:0.7rem; text-align:center; max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pd-pts  { font-family:'Syne', sans-serif; font-weight:700; font-size:0.88rem; color:var(--gold); }
+.pd-block { width:82px; display:flex; align-items:center; justify-content:center; font-size:2rem; }
+.pd-slot:nth-child(1) .pd-block { height:90px; background:linear-gradient(180deg,#f59e0b,#92400e); }
+.pd-slot:nth-child(2) .pd-block { height:65px; background:linear-gradient(180deg,#9ca3af,#374151); }
+.pd-slot:nth-child(3) .pd-block { height:48px; background:linear-gradient(180deg,#b45309,#451a03); }
+.full-lb { width:100%; max-width:400px; margin-bottom:1rem; }
+.lb-row { display:flex; align-items:center; gap:0.65rem; padding:0.45rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; }
+.lb-row:last-child { border-bottom:none; }
+.lb-row.me { color:var(--gold); font-weight:700; }
+.lb-rank { font-family:'Space Mono', monospace; font-size:0.68rem; color:var(--muted); width:1.4rem; }
+.lb-name { flex:1; }
+.lb-pts  { font-family:'Space Mono', monospace; font-size:0.8rem; color:var(--accent); }
+
+.recap { width:100%; max-width:400px; background:var(--card); border:1px solid var(--border); padding:1rem; margin-bottom:1rem; }
+.recap-head { font-family:'Syne', sans-serif; font-weight:700; font-size:1rem; color:var(--red); margin-bottom:0.65rem; }
+.recap-item { font-size:0.8rem; color:var(--muted); padding:0.38rem 0; border-bottom:1px solid var(--border); line-height:1.5; }
+.recap-item:last-child { border-bottom:none; }
+.recap-item strong { font-family:'Space Mono', monospace; color:var(--text); font-size:0.78rem; }
+
+/* ─── FLASH ─── */
+#flash {
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  pointer-events:none; z-index:200;
+  font-family:'Syne', sans-serif; font-weight:800; font-size:5.5rem;
+  opacity:0; transition:opacity 0.1s; text-shadow:0 0 60px currentColor;
+}
+#flash.show { opacity:1; }
+#flash.out  { opacity:0; transition:opacity 0.5s; }
+
+/* ─── SPINNER ─── */
+.spin {
+  width:38px; height:38px; border:3px solid var(--border);
+  border-top-color:var(--accent); border-radius:50%;
+  animation:spinning 0.7s linear infinite; margin:0 auto 1rem;
+}
+@keyframes spinning { to{transform:rotate(360deg)} }
+
+/* ─── ERROR TOAST ─── */
+#toast {
+  position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%);
+  background:var(--red); color:#fff; padding:0.65rem 1.25rem;
+  font-family:'Space Mono', monospace; font-size:0.78rem;
+  z-index:300; display:none; max-width:90vw; text-align:center;
+}
+
+.center { display:flex; flex-direction:column; align-items:center; text-align:center; gap:0.75rem; }
+
+@media(max-width:520px){
+  .choices   { grid-template-columns:1fr; }
+  .mode-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+<div id="toast"></div>
+
+<!-- ════════ LANDING ════════ -->
+<div class="screen active" id="s-landing">
+  <div class="center">
+    <div class="badge">⚡ Real-time Multiplayer</div>
+    <h1 class="hero">Apostrophe<br>Arena</h1>
+    <p class="hero-sub">Classroom edition · No login needed</p>
+    <div class="mode-grid">
+      <div class="mode-btn" onclick="nav('s-host-setup')">
+        <div class="mode-icon">👑</div>
+        <div class="mode-name">Host Game</div>
+        <div class="mode-desc">Create a room and share the code with your group.</div>
+      </div>
+      <div class="mode-btn" onclick="nav('s-join')">
+        <div class="mode-icon">📱</div>
+        <div class="mode-name">Join Game</div>
+        <div class="mode-desc">Enter a friend's 4-letter code and play.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ HOST SETUP ════════ -->
+<div class="screen" id="s-host-setup">
+  <div class="card">
+    <div class="badge">Host Setup</div>
+    <div class="section-head">Create Your Room</div>
+
+    <div class="field">
+      <label>Your name</label>
+      <input type="text" id="hostName" placeholder="e.g. Jordan" maxlength="18">
+    </div>
+
+    <div class="field">
+      <label>Questions</label>
+      <div class="pills" id="g-qcount">
+        <button class="pill on" data-v="10" onclick="pick('g-qcount',this)">10</button>
+        <button class="pill"    data-v="15" onclick="pick('g-qcount',this)">15</button>
+        <button class="pill"    data-v="20" onclick="pick('g-qcount',this)">20</button>
+        <button class="pill"    data-v="99" onclick="pick('g-qcount',this)">All</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Difficulty</label>
+      <div class="pills" id="g-diff">
+        <button class="pill on"  data-v="mixed" onclick="pick('g-diff',this)">Mixed</button>
+        <button class="pill"     data-v="easy"  onclick="pick('g-diff',this)">Starter</button>
+        <button class="pill"     data-v="hard"  onclick="pick('g-diff',this)">Challenge</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Seconds per question</label>
+      <div class="pills" id="g-time">
+        <button class="pill"     data-v="10" onclick="pick('g-time',this)">10s</button>
+        <button class="pill on"  data-v="20" onclick="pick('g-time',this)">20s</button>
+        <button class="pill"     data-v="30" onclick="pick('g-time',this)">30s</button>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="hostCreate()">Create Room →</button>
+      <button class="btn btn-ghost"   onclick="nav('s-landing')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ HOST LOBBY ════════ -->
+<div class="screen" id="s-host-lobby">
+  <div class="card" style="max-width:500px">
+    <div class="room-code-display">
+      <div class="rcd-label">Room Code — share with your group</div>
+      <div class="rcd-code" id="lobbyCode">----</div>
+      <p class="muted" style="margin-top:0.35rem">Everyone goes to <strong id="siteUrl" style="color:var(--gold)"></strong> → Join Game → enter this code</p>
+    </div>
+    <div class="sb-head">Players in room</div>
+    <div class="player-chips" id="lobbyChips"></div>
+    <button class="btn btn-gold" id="btnStart" onclick="hostStart()" disabled>▶ Start Game</button>
+    <p class="muted" id="lobbyHint" style="margin-top:0.5rem">Waiting for players…</p>
+  </div>
+</div>
+
+<!-- ════════ JOIN ════════ -->
+<div class="screen" id="s-join">
+  <div class="card">
+    <div class="badge">Join Game</div>
+    <div class="section-head">Enter Room Code</div>
+    <div class="field">
+      <label>Your name</label>
+      <input type="text" id="joinName" placeholder="e.g. Alex" maxlength="18">
+    </div>
+    <div class="field">
+      <label>Room Code</label>
+      <input type="text" id="joinCode" class="code-input" placeholder="XXXX" maxlength="4"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="joinRoom()">Join →</button>
+      <button class="btn btn-ghost"   onclick="nav('s-landing')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CONNECTING ════════ -->
+<div class="screen" id="s-connecting">
+  <div class="center">
+    <div class="spin"></div>
+    <p class="mono muted" id="connectMsg">Connecting…</p>
+  </div>
+</div>
+
+<!-- ════════ WAITING (student) ════════ -->
+<div class="screen" id="s-waiting">
+  <div class="center">
+    <div class="badge">You're in! 🎉</div>
+    <div class="rcd-code" id="waitCode" style="font-size:2.5rem">----</div>
+    <p class="accent-text mono" id="waitName" style="font-size:0.9rem"></p>
+    <div class="muted" style="margin-top:0.5rem">Waiting for host to start</div>
+    <div class="waiting-dots" style="margin-top:0.75rem"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- ════════ GAME ════════ -->
+<div class="screen top" id="s-game">
+  <div style="width:100%; max-width:700px">
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-label">Q <strong id="hQ">1</strong>/<strong id="hTotal">10</strong></div>
+      <div class="hud-label" id="hCat" style="font-size:0.6rem"></div>
+      <div class="timer-wrap">
+        <div class="timer-track"><div class="timer-bar" id="tBar" style="width:100%"></div></div>
+        <div class="timer-num" id="tNum">20</div>
+      </div>
+    </div>
+
+    <!-- Question -->
+    <div class="q-card">
+      <div class="q-cat" id="qCat"></div>
+      <div class="q-text" id="qText"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+
+    <!-- Explanation -->
+    <div class="exp" id="expBox">
+      <div class="exp-rule" id="expRule"></div>
+      <div class="exp-body" id="expBody"></div>
+    </div>
+
+    <!-- Locked in (student) -->
+    <div class="locked" id="locked">✓ Answer locked in — waiting for others…</div>
+
+    <!-- Host controls -->
+    <div class="host-ctrl" id="hostCtrl">
+      <button class="btn btn-primary" id="btnNext" onclick="hostNext()" disabled>Next Question →</button>
+      <span class="tally" id="tally">0 answered</span>
+      <button class="btn btn-ghost"  id="btnReveal" onclick="hostReveal()" style="font-size:0.78rem">Reveal Now</button>
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="sb">
+      <div class="sb-head">Live Scores</div>
+      <div id="sbRows"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════ RESULTS ════════ -->
+<div class="screen" id="s-results">
+  <div class="results-title" id="rTitle">Game Over</div>
+  <div class="podium" id="podium"></div>
+  <div class="full-lb" id="fullLb"></div>
+  <div class="recap" id="recap" style="display:none">
+    <div class="recap-head">⚠️ Review These Rules</div>
+    <div id="recapList"></div>
+  </div>
+  <div class="btn-row" style="justify-content:center">
+    <button class="btn btn-gold"  id="btnAgain" onclick="playAgain()" style="display:none">Play Again</button>
+    <button class="btn btn-ghost" onclick="nav('s-landing')">Exit</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  QUESTION BANK
+// ════════════════════════════════════════
+const QS = [
+  {cat:"its vs. it's",diff:"easy",
+   q:"The dog chased ___ tail around the yard.",
+   ch:["its","it's","its'","its's"],ans:0,
+   rule:"its = possessive pronoun",
+   exp:"<strong>its</strong> (no apostrophe) is a possessive pronoun — like 'his' or 'her'. <strong>it's</strong> only means 'it is' or 'it has'. Try replacing with 'it is' — if it fits, use <em>it's</em>."},
+
+  {cat:"its vs. it's",diff:"easy",
+   q:"___ going to be a tough quiz if you haven't studied.",
+   ch:["It's","Its","Its'","Itss"],ans:0,
+   rule:"it's = it is",
+   exp:"<strong>It's</strong> = <em>it is</em>. The apostrophe replaces the missing letter. Test: 'it is going to be tough' → yes → use <em>it's</em>."},
+
+  {cat:"its vs. it's",diff:"hard",
+   q:"The school updated ___ dress code last fall.",
+   ch:["its","it's","its'","it'ss"],ans:0,
+   rule:"its = ownership (no apostrophe)",
+   exp:"The school <em>owns</em> the dress code → possessive. Possessive pronouns (his, her, <strong>its</strong>, their) NEVER use apostrophes."},
+
+  {cat:"its vs. it's",diff:"hard",
+   q:"___ been three weeks since the last test.",
+   ch:["It's","Its","Its'","Itss"],ans:0,
+   rule:"it's = it has",
+   exp:"<strong>It's</strong> = <em>it has</em> been. 'It has been three weeks' sounds right → <em>it's</em>."},
+
+  {cat:"Singular Possessive",diff:"easy",
+   q:"Marcus left ___ backpack on the bus again.",
+   ch:["Marcus's","Marcus'","Marcuses","Marcuse's"],ans:0,
+   rule:"Singular nouns: add 's",
+   exp:"For singular nouns (including names ending in <em>s</em>), add <strong>'s</strong> to show possession. Most modern guides prefer 'Marcus's'."},
+
+  {cat:"Singular Possessive",diff:"easy",
+   q:"The ___ bark woke up the entire neighborhood.",
+   ch:["dog's","dogs'","dogs's","dogs"],ans:0,
+   rule:"Singular: add apostrophe + s",
+   exp:"One dog owns the bark → singular. Add <strong>'s</strong>: <em>dog's</em>."},
+
+  {cat:"Plural Possessive",diff:"easy",
+   q:"The ___ homework was piled on the teacher's desk.",
+   ch:["students'","students's","student's","students"],ans:0,
+   rule:"Plural ending -s: apostrophe only",
+   exp:"<em>Students</em> is already plural and ends in <em>s</em>. Just add an apostrophe after: <strong>students'</strong>. Adding another <em>s</em> is wrong."},
+
+  {cat:"Plural Possessive",diff:"hard",
+   q:"The ___ playground equipment was brand new.",
+   ch:["children's","childrens'","childrens","children's's"],ans:0,
+   rule:"Irregular plural: treat like singular",
+   exp:"<em>Children</em> is an irregular plural — no <em>s</em> ending. Treat it like a singular noun and add <strong>'s</strong>."},
+
+  {cat:"Plural Possessive",diff:"hard",
+   q:"The ___ basketball team won regionals.",
+   ch:["women's","womens'","womens","woman's"],ans:0,
+   rule:"Irregular plural: women's",
+   exp:"<em>Women</em> is an irregular plural not ending in <em>s</em>. Add <strong>'s</strong> → <em>women's</em>. Never 'womens''."},
+
+  {cat:"Contractions",diff:"easy",
+   q:"___ not my fault the alarm didn't go off.",
+   ch:["That's","Thats","That'ss","Thats'"],ans:0,
+   rule:"that's = that is",
+   exp:"<strong>That's</strong> = <em>that is</em>. The apostrophe replaces the <em>i</em> in <em>is</em>."},
+
+  {cat:"Contractions",diff:"hard",
+   q:"___ the one who forgot to close the laptop.",
+   ch:["You're","Your","Youre","You'r"],ans:0,
+   rule:"you're = you are",
+   exp:"<strong>You're</strong> = <em>you are</em>. <strong>Your</strong> shows possession ('your phone'). Test: 'you are the one' → yes → <em>you're</em>."},
+
+  {cat:"Contractions",diff:"hard",
+   q:"___ all going to the same lunch period.",
+   ch:["We're","Were","We'r","Wer'e"],ans:0,
+   rule:"we're = we are",
+   exp:"<strong>We're</strong> = <em>we are</em>. Don't confuse with <em>were</em> (past tense of 'be')."},
+
+  {cat:"No Apostrophe",diff:"easy",
+   q:"Three ___ ran across the football field at halftime.",
+   ch:["dogs","dog's","dogs'","dog'ss"],ans:0,
+   rule:"Plurals don't use apostrophes",
+   exp:"This just means <em>more than one dog</em>. No ownership = no apostrophe. Simple plurals never get apostrophes."},
+
+  {cat:"No Apostrophe",diff:"easy",
+   q:"She picked up four ___ from the corner store.",
+   ch:["avocados","avocado's","avocados'","avocados's"],ans:0,
+   rule:"The greengrocer's apostrophe",
+   exp:"Four avocados = a simple plural. No possession → no apostrophe. Adding one ('avocado's') is called the <em>greengrocer's apostrophe</em> — one of the most common errors in English."},
+
+  {cat:"No Apostrophe",diff:"hard",
+   q:"The ___ on Maple Street all decorated for Halloween.",
+   ch:["Millers","Miller's","Millers'","Miller'ss"],ans:0,
+   rule:"Pluralizing family names: no apostrophe",
+   exp:"To say 'the Miller family,' just add <em>s</em>: the <strong>Millers</strong>. <em>Miller's</em> = one person owns something. <em>Millers'</em> = the family owns something."},
+
+  {cat:"Joint Possession",diff:"hard",
+   q:"We all went to ___ house to study for the exam.",
+   ch:["Kai and Sam's","Kai's and Sam's","Kai and Sams","Kais and Sams"],ans:0,
+   rule:"Joint possession: last name gets 's",
+   exp:"One shared house → <em>joint</em> possession. Only the <strong>last</strong> name gets <em>'s</em>. Separate houses would be 'Kai's and Sam's houses'."},
+
+  {cat:"Joint Possession",diff:"hard",
+   q:"___ projects were completely different styles.",
+   ch:["Mia's and Leo's","Mia and Leo's","Mias and Leos","Mia's and Leos"],ans:0,
+   rule:"Separate possession: each name gets 's",
+   exp:"Two separate projects (not shared) → each person gets <strong>'s</strong>. Compare: 'Mia and Leo's project' would mean one shared project."},
+
+  {cat:"Spot the Error",diff:"hard",
+   q:"Which sentence has an apostrophe MISTAKE?",
+   ch:["The teacher's desk was covered in papers.",
+       "The students' projects were displayed outside.",
+       "Its a perfect day for a pop quiz.",
+       "The women's locker room is being renovated."],
+   ans:2,
+   rule:"its vs. it's in context",
+   exp:"Option C is wrong: <em>'Its a perfect day'</em> should be <strong>It's</strong> (= it is). <em>Its</em> without apostrophe is only the possessive form."},
+
+  {cat:"Spot the Error",diff:"hard",
+   q:"Which sentence is CORRECT?",
+   ch:["I can't believe you're late again.",
+       "The cat hurt it's paw on a nail.",
+       "We have three quiz's this week.",
+       "The childrens' backpacks were left outside."],
+   ans:0,
+   rule:"Multiple rules at once",
+   exp:"A is correct: <em>can't = cannot, you're = you are</em>. B: <em>it's</em> → should be <em>its</em>. C: <em>quizzes</em> is just a plural — no apostrophe. D: <em>children's</em>, not <em>childrens'</em>."},
+
+  {cat:"Spot the Error",diff:"easy",
+   q:"A sign says \"Sandwich's — $5 each\". What's wrong?",
+   ch:["Apostrophe error — it's just a plural",
+       "Correct — the sandwich owns the price",
+       "No error — signs use different rules",
+       "The price is wrong, not the punctuation"],
+   ans:0,
+   rule:"Greengrocer's apostrophe",
+   exp:"This is the <strong>greengrocer's apostrophe</strong> — adding an apostrophe to a simple plural. <em>Sandwiches</em> = more than one sandwich. No ownership → no apostrophe."},
+
+  {cat:"Time Possession",diff:"hard",
+   q:"She needs a ___ break before the final exam.",
+   ch:["week's","weeks'","weeks","week"],ans:0,
+   rule:"Time expressions use possessives",
+   exp:"When time modifies a noun, treat it as possessive: <em>a week's break, two weeks' notice</em>. One week → <strong>week's</strong>."},
+
+  {cat:"Time Possession",diff:"hard",
+   q:"The manager gave him two ___ notice.",
+   ch:["weeks'","week's","weeks","week's'"],ans:0,
+   rule:"Plural time possession",
+   exp:"Two weeks (plural, ends in <em>s</em>) → add apostrophe only: <strong>weeks'</strong>. Compare singular: <em>one week's notice</em>."},
+
+  {cat:"Contractions",diff:"easy",
+   q:"___ been trying to reach you all afternoon.",
+   ch:["They've","Theyve","They'v","Theyve'"],ans:0,
+   rule:"they've = they have",
+   exp:"<strong>They've</strong> = <em>they have</em>. The apostrophe replaces the <em>ha</em> in <em>have</em>."},
+
+  {cat:"Plural Possessive",diff:"easy",
+   q:"Both ___ bikes were stolen from outside school.",
+   ch:["brothers'","brother's","brothers's","brothers"],ans:0,
+   rule:"Plural -s: apostrophe only",
+   exp:"Two brothers → plural. <em>Brothers</em> ends in <em>s</em>, so just add an apostrophe after: <strong>brothers'</strong>."},
+
+  {cat:"its vs. it's",diff:"easy",
+   q:"The team celebrated ___ victory with a pizza party.",
+   ch:["its","it's","its'","it'ss"],ans:0,
+   rule:"its = possessive pronoun",
+   exp:"The team <em>owns</em> the victory → possessive pronoun. <strong>its</strong> — no apostrophe. Tip: possessive pronouns never need apostrophes."},
+];
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let ws = null;
+let myId = null;
+let myName = '';
+let amHost = false;
+let roomCode = '';
+let missedRules = {};
+let timerInterval = null;
+let localTimeLeft = 0;
+let currentAnswered = false;
+let currentRevealData = null;
+
+// Snapshot of latest game state from server
+let gState = { phase: 'lobby', players: {}, currentQ: 0, totalQ: 0, answers: {}, timePerQ: 20 };
+
+// ════════════════════════════════════════
+//  NAV + PILLS
+// ════════════════════════════════════════
+function nav(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function pick(group, btn) {
+  document.querySelectorAll('#'+group+' .pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function getpick(group) {
+  const a = document.querySelector('#'+group+' .pill.on');
+  return a ? a.dataset.v : null;
+}
+
+// ════════════════════════════════════════
+//  TOAST / FLASH
+// ════════════════════════════════════════
+function toast(msg, dur=3500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', dur);
+}
+
+function flash(txt, color) {
+  const el = document.getElementById('flash');
+  el.textContent = txt; el.style.color = color;
+  el.classList.add('show');
+  setTimeout(() => { el.classList.remove('show'); el.classList.add('out'); }, 600);
+  setTimeout(() => el.classList.remove('out'), 1100);
+}
+
+// ════════════════════════════════════════
+//  WEBSOCKET CONNECTION
+// ════════════════════════════════════════
+function connect(onOpen) {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const url = `${proto}://${location.host}`;
+  ws = new WebSocket(url);
+  ws.onopen = onOpen;
+  ws.onmessage = e => receive(JSON.parse(e.data));
+  ws.onerror = () => { nav('s-landing'); toast('Connection error — please try again.'); };
+  ws.onclose = () => {
+    if (document.getElementById('s-game').classList.contains('active') ||
+        document.getElementById('s-waiting').classList.contains('active')) {
+      toast('Disconnected from server.');
+    }
+  };
+}
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+// ════════════════════════════════════════
+//  RECEIVE MESSAGES
+// ════════════════════════════════════════
+function receive(msg) {
+  if (msg.type === 'room_created') {
+    myId = msg.id;
+    roomCode = msg.code;
+    document.getElementById('lobbyCode').textContent = msg.code;
+    document.getElementById('siteUrl').textContent = location.hostname;
+    nav('s-host-lobby');
+  }
+
+  else if (msg.type === 'joined') {
+    myId = msg.id;
+    roomCode = msg.code;
+    document.getElementById('waitCode').textContent = msg.code;
+    document.getElementById('waitName').textContent = 'You\'re in as ' + myName + ' 👋';
+    nav('s-waiting');
+  }
+
+  else if (msg.type === 'state') {
+    gState = msg.summary;
+    if (document.getElementById('s-host-lobby').classList.contains('active')) {
+      renderLobbyPlayers(msg.summary.players);
+    }
+    renderScoreboard(msg.summary.players);
+    updateTally(msg.summary);
+  }
+
+  else if (msg.type === 'question') {
+    gState = msg.summary;
+    showQuestion(msg);
+  }
+
+  else if (msg.type === 'reveal') {
+    gState = msg.summary;
+    currentRevealData = msg;
+    showReveal(msg);
+  }
+
+  else if (msg.type === 'results') {
+    gState = msg.summary;
+    showResults(msg.summary);
+  }
+
+  else if (msg.type === 'error') {
+    toast('⚠️ ' + msg.message);
+    if (msg.message.includes('not found') || msg.message.includes('progress')) {
+      nav('s-join');
+    }
+  }
+}
+
+// ════════════════════════════════════════
+//  HOST: CREATE ROOM
+// ════════════════════════════════════════
+function hostCreate() {
+  const name = document.getElementById('hostName').value.trim();
+  if (!name) { err('hostName'); return; }
+
+  const qcount = parseInt(getpick('g-qcount')) || 10;
+  const diff   = getpick('g-diff') || 'mixed';
+  const timePerQ = parseInt(getpick('g-time')) || 20;
+
+  let pool = [...QS].sort(() => Math.random() - 0.5);
+  if (diff === 'easy') pool = pool.filter(q => q.diff === 'easy');
+  if (diff === 'hard') pool = pool.filter(q => q.diff === 'hard');
+  if (!pool.length) pool = [...QS].sort(() => Math.random() - 0.5);
+  const questions = pool.slice(0, Math.min(qcount, pool.length));
+
+  myName = name;
+  amHost = true;
+  nav('s-connecting');
+  document.getElementById('connectMsg').textContent = 'Creating room…';
+
+  connect(() => {
+    send({ type: 'host_create', name, questions, timePerQ });
+  });
+}
+
+function renderLobbyPlayers(players) {
+  const chips = document.getElementById('lobbyChips');
+  const entries = Object.entries(players);
+  chips.innerHTML = entries.map(([id, p], i) =>
+    `<div class="chip"><span class="dot ${i===0?'host':''}"></span>${p.name}${i===0?' (host)':''}</div>`
+  ).join('') || '<span class="muted">No one yet…</span>';
+
+  const btn = document.getElementById('btnStart');
+  btn.disabled = entries.length < 1;
+  document.getElementById('lobbyHint').textContent = entries.length >= 1
+    ? `${entries.length} player${entries.length>1?'s':''} ready — start whenever!`
+    : 'Waiting for players to join…';
+}
+
+function hostStart() {
+  send({ type: 'host_start' });
+}
+
+// ════════════════════════════════════════
+//  JOIN ROOM
+// ════════════════════════════════════════
+function joinRoom() {
+  const name = document.getElementById('joinName').value.trim();
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (!name) { err('joinName'); return; }
+  if (code.length !== 4) { err('joinCode'); return; }
+
+  myName = name;
+  amHost = false;
+  nav('s-connecting');
+  document.getElementById('connectMsg').textContent = 'Connecting to room ' + code + '…';
+
+  connect(() => {
+    send({ type: 'join', name, code });
+  });
+}
+
+// ════════════════════════════════════════
+//  SHOW QUESTION
+// ════════════════════════════════════════
+function showQuestion(msg) {
+  nav('s-game');
+  currentAnswered = false;
+
+  document.getElementById('hQ').textContent     = msg.index + 1;
+  document.getElementById('hTotal').textContent = msg.total;
+  document.getElementById('hCat').textContent   = msg.cat;
+  document.getElementById('qCat').textContent   = msg.cat;
+  document.getElementById('qText').innerHTML    = msg.text.replace('___', '<span class="blank">___</span>');
+
+  const keys = ['A','B','C','D'];
+  document.getElementById('choices').innerHTML = msg.choices.map((c,i) =>
+    `<button class="choice" id="ch${i}" onclick="answer(${i})">
+      <span class="ck">${keys[i]}</span>${c}
+    </button>`
+  ).join('');
+
+  document.getElementById('expBox').className = 'exp';
+  document.getElementById('locked').className = 'locked';
+
+  const hc = document.getElementById('hostCtrl');
+  hc.className = amHost ? 'host-ctrl show' : 'host-ctrl';
+  document.getElementById('btnNext').disabled = true;
+
+  renderScoreboard(msg.summary?.players || {});
+  startTimer(msg.timePerQ);
+}
+
+// ════════════════════════════════════════
+//  TIMER
+// ════════════════════════════════════════
+function startTimer(secs) {
+  if (timerInterval) clearInterval(timerInterval);
+  localTimeLeft = secs;
+  setTimer(secs, secs);
+  timerInterval = setInterval(() => {
+    localTimeLeft--;
+    setTimer(localTimeLeft, secs);
+    if (localTimeLeft <= 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+function setTimer(cur, max) {
+  const bar = document.getElementById('tBar');
+  const num = document.getElementById('tNum');
+  if (!bar) return;
+  const pct = Math.max(0, (cur/max)*100);
+  bar.style.width = pct + '%';
+  bar.style.background = cur<=5 ? 'var(--red)' : cur<=10 ? '#f59e0b' : 'var(--accent)';
+  num.textContent = Math.max(0, cur);
+  num.style.color = cur<=5 ? 'var(--red)' : 'var(--accent)';
+}
+
+// ════════════════════════════════════════
+//  ANSWER
+// ════════════════════════════════════════
+function answer(idx) {
+  if (currentAnswered) return;
+  currentAnswered = true;
+  if (timerInterval) clearInterval(timerInterval);
+
+  document.querySelectorAll('.choice').forEach((b,i) => {
+    b.disabled = true;
+    if (i === idx) b.classList.add('picked');
+  });
+  document.getElementById('locked').className = 'locked show';
+
+  send({ type: 'answer', choice: idx, timeLeft: localTimeLeft });
+}
+
+// ════════════════════════════════════════
+//  HOST: REVEAL / NEXT
+// ════════════════════════════════════════
+function hostReveal() { send({ type: 'host_reveal' }); }
+
+function hostNext() { send({ type: 'host_next' }); }
+
+// ════════════════════════════════════════
+//  SHOW REVEAL
+// ════════════════════════════════════════
+function showReveal(msg) {
+  if (timerInterval) clearInterval(timerInterval);
+  document.getElementById('locked').className = 'locked';
+
+  const myAnswer = msg.answers[myId];
+  const correct  = myAnswer && myAnswer.choice === msg.correctIndex;
+
+  // Highlight choices
+  document.querySelectorAll('.choice').forEach((b,i) => {
+    b.disabled = true;
+    if (i === msg.correctIndex) b.classList.add('correct');
+    else if (myAnswer && i === myAnswer.choice) b.classList.add('wrong');
+  });
+
+  // Fill blank
+  const blank = document.querySelector('.blank');
+  if (blank) {
+    // We need the choices text — look in current choices list
+    const chEls = document.querySelectorAll('.choice');
+    if (chEls[msg.correctIndex]) {
+      blank.textContent = chEls[msg.correctIndex].textContent.replace(/^[ABCD]/, '').trim();
+    }
+  }
+
+  // Explanation
+  const expBox = document.getElementById('expBox');
+  document.getElementById('expRule').textContent = '📘 ' + msg.rule;
+  document.getElementById('expBody').innerHTML   = msg.exp;
+  expBox.className = 'exp show' + (correct || !myAnswer ? '' : ' bad');
+
+  // Flash
+  if (myAnswer) flash(correct ? '✓' : '✗', correct ? 'var(--green)' : 'var(--red)');
+
+  // Track missed rules for recap
+  if (myAnswer && !correct) {
+    missedRules[msg.rule] = (missedRules[msg.rule] || 0) + 1;
+  }
+
+  // Host enable next button
+  if (amHost) document.getElementById('btnNext').disabled = false;
+
+  renderScoreboard(msg.summary.players);
+}
+
+// ════════════════════════════════════════
+//  SCOREBOARD
+// ════════════════════════════════════════
+function renderScoreboard(players) {
+  if (!players) return;
+  const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
+  document.getElementById('sbRows').innerHTML = sorted.map(([id, p], i) =>
+    `<div class="sb-row ${id===myId?'me':''}">
+      <span class="sb-rank">${i+1}</span>
+      <span class="sb-name">${p.name}${id===myId?' ◀':''}</span>
+      <span class="sb-tick">${p.answered ? '✓' : ''}</span>
+      <span class="sb-pts">${p.score||0}</span>
+    </div>`
+  ).join('');
+}
+
+function updateTally(summary) {
+  if (!amHost) return;
+  const total    = Object.keys(summary.players || {}).length;
+  const answered = Object.keys(summary.answers || {}).length;
+  const el = document.getElementById('tally');
+  if (el) el.textContent = `${answered} / ${total} answered`;
+}
+
+// ════════════════════════════════════════
+//  RESULTS
+// ════════════════════════════════════════
+function showResults(summary) {
+  if (timerInterval) clearInterval(timerInterval);
+  nav('s-results');
+
+  const sorted = Object.entries(summary.players || {}).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  const myRank = sorted.findIndex(([id])=>id===myId) + 1;
+
+  document.getElementById('rTitle').textContent =
+    sorted[0] ? (sorted[0][0] === myId ? '🏆 You Win!' : `🏆 ${sorted[0][1].name} Wins!`) : 'Game Over';
+
+  // Podium (top 3, reordered 2-1-3)
+  const top3 = sorted.slice(0,3);
+  const display = top3.length >= 3 ? [top3[1],top3[0],top3[2]] : [top3[0]].filter(Boolean);
+  const medals = top3.length >= 3 ? ['🥈','🥇','🥉'] : ['🥇'];
+  document.getElementById('podium').innerHTML = display.map(([id,p],i) =>
+    `<div class="pd-slot">
+      <div class="pd-name">${p.name}</div>
+      <div class="pd-pts">${p.score||0} pts</div>
+      <div class="pd-block">${medals[i]}</div>
+    </div>`
+  ).join('');
+
+  // Full leaderboard
+  document.getElementById('fullLb').innerHTML = sorted.map(([id,p],i) =>
+    `<div class="lb-row ${id===myId?'me':''}">
+      <span class="lb-rank">${i+1}</span>
+      <span class="lb-name">${p.name}${id===myId?' (you)':''}</span>
+      <span class="lb-pts">${p.score||0} pts</span>
+    </div>`
+  ).join('');
+
+  // Recap
+  const missed = Object.entries(missedRules).sort((a,b)=>b[1]-a[1]);
+  if (missed.length > 0) {
+    document.getElementById('recap').style.display = 'block';
+    document.getElementById('recapList').innerHTML = missed.map(([rule, n]) =>
+      `<div class="recap-item">⚠️ <strong>${rule}</strong> — missed ${n} time${n>1?'s':''}</div>`
+    ).join('');
+  }
+
+  if (amHost) document.getElementById('btnAgain').style.display = 'inline-flex';
+}
+
+function playAgain() {
+  nav('s-host-setup');
+}
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+function err(id) {
+  const el = document.getElementById(id);
+  el.classList.add('error');
+  el.focus();
+  setTimeout(() => el.classList.remove('error'), 600);
+}
+</script>
+</body>
+</html>
