@@ -126,6 +126,18 @@ body::before {
 .pill:hover { border-color:var(--accent); color:var(--text); }
 .pill.on { background:rgba(124,58,237,0.2); border-color:var(--accent); color:#c4b5fd; }
 
+/* ─── MODE PILLS (host setup) ─── */
+.mode-pill {
+  background:var(--surface); border:1px solid var(--border);
+  padding:0.7rem 0.8rem; cursor:pointer; text-align:left;
+  display:flex; flex-direction:column; gap:0.2rem;
+  transition:all 0.15s;
+}
+.mode-pill:hover { border-color:var(--accent); }
+.mode-pill.on { background:rgba(124,58,237,0.15); border-color:var(--accent); }
+.mp-name { font-family:'Syne', sans-serif; font-weight:700; font-size:0.88rem; color:var(--gold); }
+.mp-desc { font-size:0.67rem; color:var(--muted); line-height:1.35; }
+
 /* ─── BUTTONS ─── */
 .btn {
   font-family:'Syne', sans-serif; font-weight:700; font-size:0.9rem;
@@ -228,6 +240,7 @@ body::before {
   padding:0.85rem 1rem; cursor:pointer;
   display:flex; align-items:center; gap:0.65rem;
   transition:all 0.15s; font-size:0.9rem; font-weight:500; text-align:left;
+  color:var(--text);
 }
 .choice:hover:not([disabled]) { border-color:var(--accent); background:rgba(124,58,237,0.09); }
 .choice[disabled] { cursor:not-allowed; }
@@ -379,13 +392,35 @@ body::before {
 
 <!-- ════════ HOST SETUP ════════ -->
 <div class="screen" id="s-host-setup">
-  <div class="card">
+  <div class="card" style="max-width:520px; max-height:92vh; overflow-y:auto">
     <div class="badge">Host Setup</div>
     <div class="section-head">Create Your Room</div>
 
     <div class="field">
       <label>Your name</label>
       <input type="text" id="hostName" placeholder="e.g. Jordan" maxlength="18">
+    </div>
+
+    <div class="field">
+      <label>Game Mode</label>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.45rem">
+        <button class="mode-pill on" data-v="blitz" onclick="pickMode(this)">
+          <span>⚡ <span class="mp-name">Blitz</span></span>
+          <span class="mp-desc">Everyone answers every Q · most points wins</span>
+        </button>
+        <button class="mode-pill" data-v="battle" onclick="pickMode(this)">
+          <span>⚔️ <span class="mp-name">Battle</span></span>
+          <span class="mp-desc">3 lives each · wrong answers cost a life</span>
+        </button>
+        <button class="mode-pill" data-v="judge" onclick="pickMode(this)">
+          <span>🔍 <span class="mp-name">Judge</span></span>
+          <span class="mp-desc">Spot-the-error questions only · hardest mode</span>
+        </button>
+        <button class="mode-pill" data-v="coop" onclick="pickMode(this)">
+          <span>🤝 <span class="mp-name">Co-op</span></span>
+          <span class="mp-desc">Team score · discuss before answering</span>
+        </button>
+      </div>
     </div>
 
     <div class="field">
@@ -429,6 +464,7 @@ body::before {
     <div class="room-code-display">
       <div class="rcd-label">Room Code — share with your group</div>
       <div class="rcd-code" id="lobbyCode">----</div>
+      <div id="lobbyMode" style="font-family:'Space Mono',monospace; font-size:0.75rem; color:var(--gold); margin-top:0.3rem"></div>
       <p class="muted" style="margin-top:0.35rem">Everyone goes to <strong id="siteUrl" style="color:var(--gold)"></strong> → Join Game → enter this code</p>
     </div>
     <div class="sb-head">Players in room</div>
@@ -485,10 +521,14 @@ body::before {
     <!-- HUD -->
     <div class="hud">
       <div class="hud-label">Q <strong id="hQ">1</strong>/<strong id="hTotal">10</strong></div>
-      <div class="hud-label" id="hCat" style="font-size:0.6rem"></div>
-      <div class="timer-wrap">
-        <div class="timer-track"><div class="timer-bar" id="tBar" style="width:100%"></div></div>
-        <div class="timer-num" id="tNum">20</div>
+      <div class="hud-label" id="hCat" style="font-size:0.6rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap"></div>
+      <div style="display:flex; align-items:center; gap:0.75rem">
+        <div id="hudLives" style="display:none; font-size:0.8rem; letter-spacing:-0.05em"></div>
+        <div id="hudCoop" style="display:none; font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--gold)">🤝 TEAM</div>
+        <div class="timer-wrap">
+          <div class="timer-track"><div class="timer-bar" id="tBar" style="width:100%"></div></div>
+          <div class="timer-num" id="tNum">20</div>
+        </div>
       </div>
     </div>
 
@@ -715,11 +755,13 @@ let myId = null;
 let myName = '';
 let amHost = false;
 let roomCode = '';
+let gameMode = 'blitz'; // blitz | battle | judge | coop
 let missedRules = {};
 let timerInterval = null;
 let localTimeLeft = 0;
 let currentAnswered = false;
 let currentRevealData = null;
+let lives = {}; // { playerId: livesLeft } for battle mode
 
 // Snapshot of latest game state from server
 let gState = { phase: 'lobby', players: {}, currentQ: 0, totalQ: 0, answers: {}, timePerQ: 20 };
@@ -737,9 +779,19 @@ function pick(group, btn) {
   btn.classList.add('on');
 }
 
+function pickMode(btn) {
+  document.querySelectorAll('.mode-pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
 function getpick(group) {
   const a = document.querySelector('#'+group+' .pill.on');
   return a ? a.dataset.v : null;
+}
+
+function getMode() {
+  const a = document.querySelector('.mode-pill.on');
+  return a ? a.dataset.v : 'blitz';
 }
 
 // ════════════════════════════════════════
@@ -788,8 +840,11 @@ function receive(msg) {
   if (msg.type === 'room_created') {
     myId = msg.id;
     roomCode = msg.code;
+    gameMode = msg.mode || 'blitz';
     document.getElementById('lobbyCode').textContent = msg.code;
     document.getElementById('siteUrl').textContent = location.hostname;
+    document.getElementById('lobbyMode').textContent =
+      {blitz:'⚡ Blitz', battle:'⚔️ Battle', judge:'🔍 Judge', coop:'🤝 Co-op'}[gameMode] || '';
     nav('s-host-lobby');
   }
 
@@ -812,6 +867,7 @@ function receive(msg) {
 
   else if (msg.type === 'question') {
     gState = msg.summary;
+    gameMode = msg.mode || gameMode;
     showQuestion(msg);
   }
 
@@ -841,23 +897,26 @@ function hostCreate() {
   const name = document.getElementById('hostName').value.trim();
   if (!name) { err('hostName'); return; }
 
-  const qcount = parseInt(getpick('g-qcount')) || 10;
-  const diff   = getpick('g-diff') || 'mixed';
+  const qcount  = parseInt(getpick('g-qcount')) || 10;
+  const diff    = getpick('g-diff') || 'mixed';
   const timePerQ = parseInt(getpick('g-time')) || 20;
+  const mode    = getMode();
 
   let pool = [...QS].sort(() => Math.random() - 0.5);
-  if (diff === 'easy') pool = pool.filter(q => q.diff === 'easy');
-  if (diff === 'hard') pool = pool.filter(q => q.diff === 'hard');
+  if (mode === 'judge') pool = pool.filter(q => q.cat === 'Spot the Error');
+  if (diff === 'easy')  pool = pool.filter(q => q.diff === 'easy');
+  if (diff === 'hard')  pool = pool.filter(q => q.diff === 'hard');
   if (!pool.length) pool = [...QS].sort(() => Math.random() - 0.5);
   const questions = pool.slice(0, Math.min(qcount, pool.length));
 
   myName = name;
   amHost = true;
+  gameMode = mode;
   nav('s-connecting');
   document.getElementById('connectMsg').textContent = 'Creating room…';
 
   connect(() => {
-    send({ type: 'host_create', name, questions, timePerQ });
+    send({ type: 'host_create', name, questions, timePerQ, mode });
   });
 }
 
@@ -910,6 +969,24 @@ function showQuestion(msg) {
   document.getElementById('hCat').textContent   = msg.cat;
   document.getElementById('qCat').textContent   = msg.cat;
   document.getElementById('qText').innerHTML    = msg.text.replace('___', '<span class="blank">___</span>');
+
+  // Mode badge in HUD
+  const modeLabels = {blitz:'⚡ Blitz', battle:'⚔️ Battle', judge:'🔍 Judge', coop:'🤝 Co-op'};
+  document.getElementById('hCat').textContent = (modeLabels[gameMode] || '') + '  ·  ' + msg.cat;
+
+  // Battle mode: show my lives
+  const livesEl = document.getElementById('hudLives');
+  if (gameMode === 'battle' && livesEl) {
+    const myLives = (msg.summary?.players?.[myId]?.lives ?? 3);
+    livesEl.textContent = '❤️'.repeat(Math.max(0, myLives)) + '🖤'.repeat(Math.max(0, 3 - myLives));
+    livesEl.style.display = 'block';
+  } else if (livesEl) {
+    livesEl.style.display = 'none';
+  }
+
+  // Co-op: show group score label
+  const coopEl = document.getElementById('hudCoop');
+  if (coopEl) coopEl.style.display = gameMode === 'coop' ? 'block' : 'none';
 
   const keys = ['A','B','C','D'];
   document.getElementById('choices').innerHTML = msg.choices.map((c,i) =>
