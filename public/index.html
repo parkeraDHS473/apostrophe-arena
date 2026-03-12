@@ -650,10 +650,10 @@ const QS = [
    exp:"For singular nouns (including names ending in <em>s</em>), add <strong>'s</strong>. Most modern style guides prefer 'Marcus's' over 'Marcus''."},
 
   {cat:"Singular Possessive",diff:"easy",
-   q:"The ___ bark woke up the entire neighborhood.",
+   q:"Our one ___ loud bark woke up the entire neighborhood.",
    ch:["dogs'","dogs","dogs's","dog's"],ans:3,
    rule:"Singular: add apostrophe + s",
-   exp:"One dog owns the bark → singular possessive. Add <strong>'s</strong>: <em>dog's</em>."},
+   exp:"One dog (our one dog) owns the bark → singular possessive. Add <strong>'s</strong>: <em>dog's</em>."},
 
   {cat:"Singular Possessive",diff:"easy",
    q:"Have you seen ___ new sneakers? They're incredible.",
@@ -662,10 +662,10 @@ const QS = [
    exp:"One person (Jordan) owns the sneakers → singular possessive. Add <strong>'s</strong>: <em>Jordan's</em>."},
 
   {cat:"Singular Possessive",diff:"easy",
-   q:"The ___ engine made a strange rattling sound.",
+   q:"The only ___ engine in the lot made a strange rattling sound.",
    ch:["cars","car's","cars'","cars's"],ans:1,
-   rule:"Singular: add apostrophe + s",
-   exp:"One car owns the engine → singular. Add <strong>'s</strong>: <em>car's</em>."},
+   rule:"One car = singular possessive",
+   exp:"<em>Only</em> tells you there is one car → singular possessive: <strong>car's</strong>. If multiple cars had the problem, you would write <em>cars'</em>."},
 
   {cat:"Singular Possessive",diff:"hard",
    q:"We studied at ___ house all weekend.",
@@ -674,10 +674,10 @@ const QS = [
    exp:"Even though <em>Chris</em> ends in <em>s</em>, it's singular → add <strong>'s</strong>: <em>Chris's</em>. This is the preferred modern style."},
 
   {cat:"Singular Possessive",diff:"easy",
-   q:"The ___ performance brought the crowd to its feet.",
+   q:"The solo ___ performance brought the crowd to its feet.",
    ch:["singer's","singers","singers'","singer'ss"],ans:0,
-   rule:"Singular: add apostrophe + s",
-   exp:"One singer gave the performance → singular possessive: <strong>singer's</strong>."},
+   rule:"Solo = one singer: singular possessive",
+   exp:"<em>Solo</em> tells you there is exactly one singer → singular possessive: <strong>singer's</strong>. If multiple singers performed together, you would write <em>singers'</em>."},
 
   // ── PLURAL POSSESSIVE ─────────────────
   {cat:"Plural Possessive",diff:"easy",
@@ -1071,6 +1071,103 @@ const QS = [
    ch:["Whose / they're","Who's / there","Who's / their","Whose / their"],ans:2,
    rule:"who's = who is; their = possessive",
    exp:"<strong>Who's</strong> = <em>who is</em> coming. <strong>their</strong> = belonging to them (possessive, no apostrophe). <em>Whose</em> = belonging to whom; <em>they're</em> = they are."},
+
+  // ── SINGULAR POSSESSIVE (unambiguous — count is stated) ──────
+  {cat:"Singular Possessive",diff:"easy",
+   q:"I could only find one ___ glove in the lost and found.",
+   ch:["students'","students","students's","student's"],ans:3,
+   rule:"One student = singular possessive",
+   exp:"<em>One</em> tells you there is exactly one student → singular possessive: <strong>student's</strong>. If multiple students had lost gloves, you would write <em>students'</em>."},
+
+  {cat:"Singular Possessive",diff:"easy",
+   q:"The only ___ locker in the hallway was left wide open.",
+   ch:["teachers'","teacher's","teachers","teachers's"],ans:1,
+   rule:"Only one = singular possessive",
+   exp:"<em>Only</em> tells you there is one teacher → singular possessive: <strong>teacher's</strong>. The word <em>only</em> (or <em>one</em>) in a sentence is always your clue to use singular."},
+
+  {cat:"Singular Possessive",diff:"easy",
+   q:"Each ___ backpack was searched individually at the door.",
+   ch:["students'","students","students's","student's"],ans:3,
+   rule:"Each = one at a time = singular possessive",
+   exp:"<em>Each</em> always refers to individuals one at a time → singular: <strong>student's</strong>. Compare: <em>All the students' backpacks</em> (plural) vs. <em>each student's backpack</em> (singular)."},
+
+  {cat:"Singular Possessive",diff:"hard",
+   q:"Every ___ score improved after the extra practice session.",
+   ch:["players'","players","player's","players's"],ans:2,
+   rule:"Every = singular possessive",
+   exp:"Like <em>each</em>, the word <em>every</em> treats things one at a time → singular: <strong>player's</strong>. You would say <em>every player's score</em>, not <em>every players' score</em>."},
+
+  // ── PLURAL POSSESSIVE (unambiguous — count is stated) ────────
+  {cat:"Plural Possessive",diff:"easy",
+   q:"All three ___ projects were turned in late.",
+   ch:["student's","students's","student's","students'"],ans:3,
+   rule:"All three = plural possessive",
+   exp:"<em>All three</em> tells you there are multiple students → plural possessive: <strong>students'</strong>. <em>Student's</em> would mean only one student's project was late."},
+
+  {cat:"Plural Possessive",diff:"easy",
+   q:"The two ___ answers were completely different from each other.",
+   ch:["student's","students's","students'","students"],ans:2,
+   rule:"Two students = plural possessive",
+   exp:"<em>Two</em> tells you there are multiple students → plural possessive: <strong>students'</strong>. <em>Student's</em> = one student. When you see a number greater than one, go plural."},
+
+  {cat:"Plural Possessive",diff:"hard",
+   q:"The twelve ___ schedules were posted on the gym door.",
+   ch:["coach's","coachs'","coaches'","coaches's"],ans:2,
+   rule:"Twelve coaches = plural possessive",
+   exp:"<em>Twelve</em> tells you there are multiple coaches. Plural of <em>coach</em> is <em>coaches</em> → add apostrophe after: <strong>coaches'</strong>. <em>Coach's</em> = only one coach's schedule."},
+
+  {cat:"Plural Possessive",diff:"hard",
+   q:"Both ___ performances were recorded for the school archive.",
+   ch:["band's","bands","bands's","bands'"],ans:3,
+   rule:"Both bands = plural possessive",
+   exp:"<em>Both</em> tells you there are two bands → plural possessive: <strong>bands'</strong>. <em>Band's</em> (singular) would mean only one band performed."},
+
+  // ── SPOT THE ERROR (new — focused on singular vs. plural) ────
+  {cat:"Spot the Error",diff:"hard",
+   q:"Which sentence is CORRECT?",
+   ch:["All five players' names were on the trophy.",
+       "Each players' jersey had a number on the back.",
+       "The two student's projects won first place.",
+       "Every teachers' desk was cleared for the inspection."],
+   ans:0,
+   rule:"Five players = plural possessive",
+   exp:"A is correct: <em>all five players</em> → plural → <strong>players'</strong>. B: <em>each</em> → singular → should be <em>player's</em>. C: <em>two students</em> → plural → should be <em>students'</em>. D: <em>every teacher</em> → singular → should be <em>teacher's</em>."},
+
+  {cat:"Spot the Error",diff:"hard",
+   q:"Which sentence has an apostrophe error?",
+   ch:["The one coach's strategy surprised everyone.",
+       "Both coaches' opinions were considered.",
+       "Every student's test was graded the same day.",
+       "The three player's gear was left in the locker room."],
+   ans:3,
+   rule:"Three players = plural possessive: players'",
+   exp:"D is wrong: <em>three players</em> → plural → should be <strong>players'</strong>, not <em>player's</em>. The number <em>three</em> is the giveaway — anything more than one needs the plural possessive."},
+
+  {cat:"Spot the Error",diff:"hard",
+   q:"Which sentence is WRONG?",
+   ch:["One singer's microphone cut out mid-song.",
+       "All four singers' mics were working fine.",
+       "The two singer's voices blended perfectly.",
+       "Each singer's costume was handmade."],
+   ans:2,
+   rule:"Two singers = plural possessive: singers'",
+   exp:"C is wrong: <em>two singers</em> → plural → should be <strong>singers'</strong>, not <em>singer's</em>. Compare the others: <em>one singer's</em> (singular) and <em>all four singers'</em> (plural) are both correct."},
+
+  {cat:"Spot the Error",diff:"easy",
+   q:"A teacher writes these four on the board. Which one is WRONG?",
+   ch:["the dog's tail (one dog)","the dogs' tails (many dogs)","the student's desk (one student)","the students desk (many students)"],ans:3,
+   rule:"Plural possessive needs an apostrophe",
+   exp:"D is wrong: <em>the students desk</em> is missing its apostrophe. Many students own the desk → plural possessive → <strong>students'</strong> desk. The others are all correctly punctuated."},
+
+  {cat:"Spot the Error",diff:"hard",
+   q:"Which sentence correctly uses BOTH a singular and plural possessive?",
+   ch:["One teacher's classroom and two teachers classrooms.",
+       "One teachers' classroom and two teacher's classrooms.",
+       "One teacher's classroom and two teachers' classrooms.",
+       "One teachers classroom and two teacher's classrooms."],
+   ans:2,
+   rule:"Singular: teacher's / Plural: teachers'",
+   exp:"C is correct: <em>one teacher</em> → singular → <strong>teacher's</strong>; <em>two teachers</em> → plural → <strong>teachers'</strong>. The apostrophe moves depending on whether you're talking about one person or many."},
 ];
 
 // ════════════════════════════════════════
