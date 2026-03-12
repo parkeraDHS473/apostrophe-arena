@@ -1646,10 +1646,11 @@ function showReveal(msg) {
   // Fill blank
   const blank = document.querySelector('.blank');
   if (blank) {
-    // We need the choices text — look in current choices list
-    const chEls = document.querySelectorAll('.choice');
-    if (chEls[msg.correctIndex]) {
-      blank.textContent = chEls[msg.correctIndex].textContent.replace(/^[ABCD]/, '').trim();
+    const chEl = document.querySelectorAll('.choice')[msg.correctIndex];
+    if (chEl) {
+      // Get only the text node, ignoring the .ck letter span
+      const textNode = Array.from(chEl.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+      blank.textContent = textNode ? textNode.textContent.trim() : chEl.textContent.replace(/^[ABCD]\s*/,'').trim();
     }
   }
 
