@@ -122,7 +122,8 @@ wss.on('connection', (ws) => {
       myRoom.state.answers = {};
       Object.values(myRoom.players).forEach(p => p.answered = false);
 
-      const q = myRoom.state.questions[0];
+      const q = shuffleQuestion(myRoom.state.questions[0]);
+      myRoom.state.currentShuffledAns = q.ans;
       broadcast(myRoom, {
         type: 'question',
         index: 0,
@@ -144,8 +145,8 @@ wss.on('connection', (ws) => {
       if (!myRoom || !myId) return;
       if (myRoom.state.answers[myId]) return; // already answered
 
-      const q = myRoom.state.questions[myRoom.state.currentQ];
-      const correct = msg.choice === q.ans;
+      const correctAns = myRoom.state.currentShuffledAns ?? myRoom.state.questions[myRoom.state.currentQ].ans;
+      const correct = msg.choice === correctAns;
       const timeBonus = Math.max(0, msg.timeLeft || 0);
       const pts = correct ? 100 + timeBonus * 5 : 0;
 
@@ -190,7 +191,8 @@ wss.on('connection', (ws) => {
         myRoom.state.answers = {};
         Object.values(myRoom.players).forEach(p => p.answered = false);
 
-        const q = myRoom.state.questions[next];
+        const q = shuffleQuestion(myRoom.state.questions[next]);
+        myRoom.state.currentShuffledAns = q.ans;
         broadcast(myRoom, {
           type: 'question',
           index: next,
@@ -223,6 +225,19 @@ wss.on('connection', (ws) => {
   });
 });
 
+// ── Shuffle choices so correct answer isn't always in same position ──
+function shuffleQuestion(q) {
+  const indices = [0, 1, 2, 3];
+  // Fisher-Yates shuffle
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  const shuffledChoices = indices.map(i => q.ch[i]);
+  const newAns = indices.indexOf(q.ans);
+  return { ...q, ch: shuffledChoices, ans: newAns };
+}
+
 // ── Timer helper ──
 function startTimer(room) {
   if (room.timerTimeout) clearTimeout(room.timerTimeout);
@@ -233,14 +248,15 @@ function startTimer(room) {
 
 // ── Reveal answer + award scores ──
 function revealAnswer(room) {
-  if (room.state.phase === 'reveal') return; // already revealed
+  if (room.state.phase === 'reveal') return;
   room.state.phase = 'reveal';
 
   const q = room.state.questions[room.state.currentQ];
+  const correctIndex = room.state.currentShuffledAns ?? q.ans;
 
   broadcast(room, {
     type: 'reveal',
-    correctIndex: q.ans,
+    correctIndex,
     rule: q.rule,
     exp: q.exp,
     answers: room.state.answers,
