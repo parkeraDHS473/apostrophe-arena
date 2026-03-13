@@ -2,10 +2,39 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+// ── Persistent game counter ──
+const COUNTER_FILE = path.join(__dirname, 'game-count.json');
+
+function loadCount() {
+  try {
+    const data = JSON.parse(fs.readFileSync(COUNTER_FILE, 'utf8'));
+    return data.count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveCount(n) {
+  try {
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify({ count: n }), 'utf8');
+  } catch (e) {
+    console.error('Could not save game count:', e.message);
+  }
+}
+
+let gamesPlayed = loadCount();
+console.log(`Game counter loaded: ${gamesPlayed} games played so far`);
+
+// ── REST endpoint so the client can fetch the count ──
+app.get('/api/count', (req, res) => {
+  res.json({ count: gamesPlayed });
+});
 
 // ── Serve static files (the game HTML) ──
 app.use(express.static(path.join(__dirname, 'public')));
@@ -121,6 +150,11 @@ wss.on('connection', (ws) => {
       myRoom.state.currentQ = 0;
       myRoom.state.answers = {};
       Object.values(myRoom.players).forEach(p => p.answered = false);
+
+      // ── Increment game counter ──
+      gamesPlayed++;
+      saveCount(gamesPlayed);
+      broadcast(myRoom, { type: 'games_played', count: gamesPlayed });
 
       const q = shuffleQuestion(myRoom.state.questions[0]);
       myRoom.state.currentShuffledAns = q.ans;
