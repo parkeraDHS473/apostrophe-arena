@@ -375,6 +375,10 @@ body::before {
     <div class="badge">⚡ Real-time Multiplayer</div>
     <h1 class="hero">Apostrophe<br>Arena</h1>
     <p class="hero-sub">Classroom edition · No login needed</p>
+    <div id="gameCounter" style="
+      font-family:'Space Mono',monospace; font-size:0.7rem;
+      color:var(--muted); margin-top:0.6rem; letter-spacing:0.08em;
+    ">🎮 loading...</div>
     <div class="mode-grid">
       <div class="mode-btn" onclick="nav('s-host-setup')">
         <div class="mode-icon">👑</div>
@@ -1338,6 +1342,23 @@ let lives = {}; // { playerId: livesLeft } for battle mode
 let gState = { phase: 'lobby', players: {}, currentQ: 0, totalQ: 0, answers: {}, timePerQ: 20 };
 
 // ════════════════════════════════════════
+//  GAME COUNTER
+// ════════════════════════════════════════
+function updateCounter(n) {
+  const el = document.getElementById('gameCounter');
+  if (el) el.textContent = '🎮 ' + n.toLocaleString() + ' game' + (n === 1 ? '' : 's') + ' played';
+}
+
+// Fetch count from server on page load
+fetch('/api/count')
+  .then(r => r.json())
+  .then(d => updateCounter(d.count))
+  .catch(() => {
+    const el = document.getElementById('gameCounter');
+    if (el) el.textContent = '';
+  });
+
+// ════════════════════════════════════════
 //  NAV + PILLS
 // ════════════════════════════════════════
 function nav(id) {
@@ -1434,6 +1455,10 @@ function receive(msg) {
     }
     renderScoreboard(msg.summary.players);
     updateTally(msg.summary);
+  }
+
+  else if (msg.type === 'games_played') {
+    updateCounter(msg.count);
   }
 
   else if (msg.type === 'question') {
